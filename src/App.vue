@@ -2,18 +2,7 @@
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
     <div
       v-if="loading"
-      class="
-        fixed
-        w-100
-        h-100
-        opacity-80
-        bg-purple-800
-        inset-0
-        z-50
-        flex
-        items-center
-        justify-center
-      "
+      class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center"
     >
       <svg
         class="animate-spin -ml-1 mr-3 h-12 w-12 text-white"
@@ -51,16 +40,7 @@
                 type="text"
                 name="wallet"
                 id="wallet"
-                class="
-                  block
-                  w-full
-                  pr-10
-                  border-gray-300
-                  text-gray-900
-                  focus:outline-none focus:ring-gray-500 focus:border-gray-500
-                  sm:text-sm
-                  rounded-md
-                "
+                class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                 placeholder="Например DOGE"
               />
             </div>
@@ -72,18 +52,7 @@
                 v-for="tip in tips"
                 :key="tip"
                 @click="addTicker(tip)"
-                class="
-                  inline-flex
-                  items-center
-                  px-2
-                  m-1
-                  rounded-md
-                  text-xs
-                  font-medium
-                  bg-gray-300
-                  text-gray-800
-                  cursor-pointer
-                "
+                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
                 {{ tip }}
               </span>
@@ -94,28 +63,7 @@
         <button
           @click="addTicker(ticker)"
           type="button"
-          class="
-            my-4
-            inline-flex
-            items-center
-            py-2
-            px-4
-            border border-transparent
-            shadow-sm
-            text-sm
-            leading-4
-            font-medium
-            rounded-full
-            text-white
-            bg-gray-600
-            hover:bg-gray-700
-            transition-colors
-            duration-300
-            focus:outline-none
-            focus:ring-2
-            focus:ring-offset-2
-            focus:ring-gray-500
-          "
+          class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
         >
           <!-- Heroicon name: solid/mail -->
           <svg
@@ -132,27 +80,35 @@
           </svg>
           Добавить
         </button>
+
+        <div class="flex">
+          <div class="max-w-xs">
+            <label for="filter" class="block text-sm font-medium text-gray-700"
+              >Фильтр:</label
+            >
+            <input
+              v-model="filter"
+              type="text"
+              name="wallet"
+              id="filter"
+              class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
+              placeholder="Например BTC"
+            />
+          </div>
+        </div>
       </section>
 
       <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
-            v-for="t in tickers"
+            v-for="t in filteredTickers()"
             :key="t"
             @click="selectActiveTicker(t)"
             :class="{
               'border-purple-800': t === activeTicker,
             }"
-            class="
-              bg-white
-              overflow-hidden
-              border-4
-              shadow
-              rounded-lg
-              border-solid
-              cursor-pointer
-            "
+            class="bg-white overflow-hidden border-4 shadow rounded-lg border-solid cursor-pointer"
           >
             <div class="px-4 py-5 sm:p-6 text-center">
               <dt class="text-sm font-medium text-gray-500 truncate">
@@ -165,21 +121,7 @@
             <div class="w-full border-t border-gray-200"></div>
             <button
               @click.stop="removeTicker(t)"
-              class="
-                flex
-                items-center
-                justify-center
-                font-medium
-                w-full
-                bg-gray-100
-                px-4
-                py-4
-                sm:px-6
-                text-md text-gray-500
-                hover:text-gray-600 hover:bg-gray-200 hover:opacity-20
-                transition-all
-                focus:outline-none
-              "
+              class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 hover:opacity-20 transition-all focus:outline-none"
             >
               <svg
                 class="h-5 w-5"
@@ -257,6 +199,8 @@ export default {
       allTickers: [],
       tips: [],
 
+      filter: "",
+
       graph: [],
     };
   },
@@ -279,6 +223,7 @@ export default {
       this.clearTickerInput();
       this.error = false;
       this.tips = [];
+      this.filter = "";
     },
 
     normalizeGraph() {
@@ -346,6 +291,12 @@ export default {
 
     unselectActiveTicker() {
       this.activeTicker = null;
+    },
+
+    filteredTickers() {
+      return this.tickers.filter((t) =>
+        t.name.includes(this.filter.toUpperCase())
+      );
     },
 
     setPrice(ticker) {
