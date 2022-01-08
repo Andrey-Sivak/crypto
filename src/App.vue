@@ -220,6 +220,9 @@ export default {
       };
 
       this.tickers.push(newTicker);
+
+      window.localStorage.setItem("tickers-list", JSON.stringify(this.tickers));
+
       this.clearTickerInput();
       this.error = false;
       this.tips = [];
@@ -335,6 +338,13 @@ export default {
 
   async created() {
     const url = "https://min-api.cryptocompare.com/data/all/coinlist";
+
+    const localeStorageTickersList =
+      window.localStorage.getItem("tickers-list");
+
+    if (localeStorageTickersList) {
+      this.tickers = JSON.parse(localeStorageTickersList);
+    }
 
     await fetch(url)
       .then((res) => res.json())
