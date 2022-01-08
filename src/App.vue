@@ -80,37 +80,23 @@
           </svg>
           Добавить
         </button>
-
-        <div class="flex">
-          <div class="max-w-xs">
-            <label for="filter" class="block text-sm font-medium text-gray-700"
-              >Фильтр:</label
-            >
-            <input
-              v-model="filter"
-              type="text"
-              name="wallet"
-              id="filter"
-              class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-              placeholder="Например BTC"
-            />
-          </div>
-        </div>
       </section>
 
       <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 my-4" />
         <p>
+          Фильтр:
+          <input v-model="filter" type="text" />
           <button
-              v-if="page > 1"
-              @click="page = page - 1"
+            v-if="page > 1"
+            @click="page = page - 1"
             class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Назад
           </button>
           <button
-              v-if="hasNextPage"
-              @click="page = page + 1"
+            v-if="hasNextPage"
+            @click="page = page + 1"
             class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Вперед
