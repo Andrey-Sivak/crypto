@@ -350,11 +350,34 @@ export default {
   watch: {
     filter() {
       this.page = 1;
+
+      window.history.pushState(
+        null,
+        document.title,
+        `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
+      );
+    },
+
+    page() {
+      window.history.pushState(
+        null,
+        document.title,
+        `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
+      );
     },
   },
 
   async created() {
     const url = "https://min-api.cryptocompare.com/data/all/coinlist";
+
+    const searchParams = new URL(window.location).searchParams.entries();
+    const searchParamsData = Object.fromEntries(searchParams);
+
+    const currentPage = searchParamsData.page;
+    const currentFilter = searchParamsData.filter;
+
+    if (currentPage) this.page = currentPage;
+    if (currentFilter) this.filter = currentFilter;
 
     const localeStorageTickersList =
       window.localStorage.getItem("tickers-list");
