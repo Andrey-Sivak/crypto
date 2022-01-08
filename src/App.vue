@@ -304,11 +304,13 @@ export default {
     filteredTickers() {
       const start = (this.page - 1) * 3;
       const end = this.page * 3;
-      this.hasNextPage = this.tickers.length > end;
 
-      return this.tickers
-        .filter((t) => t.name.includes(this.filter.toUpperCase()))
-        .slice(start, end);
+      const filteredTickersList = this.tickers.filter((t) =>
+        t.name.includes(this.filter.toUpperCase())
+      );
+
+      this.hasNextPage = filteredTickersList.length > end;
+      return filteredTickersList.slice(start, end);
     },
 
     setPrice(ticker) {
@@ -342,6 +344,12 @@ export default {
         .then((tickersData) => {
           tickersData.forEach((t) => this.setPrice(t));
         });
+    },
+  },
+
+  watch: {
+    filter() {
+      this.page = 1;
     },
   },
 
