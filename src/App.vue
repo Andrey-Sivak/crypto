@@ -100,6 +100,23 @@
 
       <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 my-4" />
+        <p>
+          <button
+              v-if="page > 1"
+              @click="page = page - 1"
+            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            Назад
+          </button>
+          <button
+              v-if="hasNextPage"
+              @click="page = page + 1"
+            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            Вперед
+          </button>
+        </p>
+        <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
             v-for="t in filteredTickers()"
@@ -200,6 +217,8 @@ export default {
       tips: [],
 
       filter: "",
+      page: 1,
+      hasNextPage: true,
 
       graph: [],
     };
@@ -297,9 +316,13 @@ export default {
     },
 
     filteredTickers() {
-      return this.tickers.filter((t) =>
-        t.name.includes(this.filter.toUpperCase())
-      );
+      const start = (this.page - 1) * 3;
+      const end = this.page * 3;
+      this.hasNextPage = this.tickers.length > end;
+
+      return this.tickers
+        .filter((t) => t.name.includes(this.filter.toUpperCase()))
+        .slice(start, end);
     },
 
     setPrice(ticker) {
