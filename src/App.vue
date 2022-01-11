@@ -105,7 +105,7 @@
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
-            v-for="t in filteredTickers()"
+            v-for="t in paginatedTickers"
             :key="t"
             @click="selectActiveTicker(t)"
             :class="{
@@ -150,7 +150,7 @@
           </h3>
           <div class="flex items-end border-gray-600 border-b border-l h-64">
             <div
-              v-for="(bar, idx) in normalizeGraph()"
+              v-for="(bar, idx) in normalizedGraph"
               :key="idx"
               :style="{ height: `${bar}%` }"
               class="bg-purple-800 border w-10"
@@ -204,11 +204,55 @@ export default {
 
       filter: "",
       page: 1,
-      hasNextPage: true,
 
       graph: [],
     };
   },
+  computed: {
+    normalizedGraph() {
+      const maxGraphValue = Math.max(...this.graph);
+      const minGraphValue = Math.min(...this.graph);
+
+      if (maxGraphValue === minGraphValue) {
+        return this.graph.map(() => 50);
+      }
+
+      return this.graph.map(
+        (price) =>
+          5 + ((price - minGraphValue) * 95) / (maxGraphValue - minGraphValue)
+      );
+    },
+
+    endPageIndex() {
+      return this.page * 3;
+    },
+
+    startPageIndex() {
+      return (this.page - 1) * 3;
+    },
+
+    hasNextPage() {
+      return this.filteredTickers.length > this.endPageIndex;
+    },
+
+    filteredTickers() {
+      return this.tickers.filter((t) =>
+        t.name.includes(this.filter.toUpperCase())
+      );
+    },
+
+    paginatedTickers() {
+      return this.filteredTickers.slice(this.startPageIndex, this.endPageIndex);
+    },
+
+    pageStateOptions() {
+      return {
+        filter: this.filter,
+        page: this.page,
+      };
+    },
+  },
+
   methods: {
     addTicker(ticker) {
       if (!ticker) return;
@@ -224,24 +268,12 @@ export default {
         price: "-",
       };
 
-      this.tickers.push(newTicker);
-
-      window.localStorage.setItem("tickers-list", JSON.stringify(this.tickers));
+      this.tickers = [...this.tickers, newTicker];
 
       this.clearTickerInput();
       this.error = false;
       this.tips = [];
       this.filter = "";
-    },
-
-    normalizeGraph() {
-      const maxGraphValue = Math.max(...this.graph);
-      const minGraphValue = Math.min(...this.graph);
-
-      return this.graph.map(
-        (price) =>
-          5 + ((price - minGraphValue) * 95) / (maxGraphValue - minGraphValue)
-      );
     },
 
     clearTickerInput() {
@@ -275,11 +307,8 @@ export default {
     },
 
     removeTicker(tickerToRemove) {
-      console.log(tickerToRemove, this.activeTicker);
-
       if (tickerToRemove === this.activeTicker) {
         this.activeTicker = null;
-        this.graph = [];
       }
 
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
@@ -288,8 +317,6 @@ export default {
     handleTickerInput() {
       this.isTickerAlreadyAdd(this.ticker);
       this.tipsTicker(this.ticker);
-      // TODO: to upper
-      // this.ticker.toUpperCase();
     },
 
     selectActiveTicker(t) {
@@ -299,18 +326,6 @@ export default {
 
     unselectActiveTicker() {
       this.activeTicker = null;
-    },
-
-    filteredTickers() {
-      const start = (this.page - 1) * 3;
-      const end = this.page * 3;
-
-      const filteredTickersList = this.tickers.filter((t) =>
-        t.name.includes(this.filter.toUpperCase())
-      );
-
-      this.hasNextPage = filteredTickersList.length > end;
-      return filteredTickersList.slice(start, end);
     },
 
     setPrice(ticker) {
@@ -348,21 +363,29 @@ export default {
   },
 
   watch: {
-    filter() {
-      this.page = 1;
-
-      window.history.pushState(
-        null,
-        document.title,
-        `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
-      );
+    activeTicker() {
+      this.graph = [];
     },
 
-    page() {
+    tickers() {
+      window.localStorage.setItem("tickers-list", JSON.stringify(this.tickers));
+    },
+
+    paginatedTickers() {
+      if (this.paginatedTickers.length === 0 && this.page > 1) {
+        this.page -= 1;
+      }
+    },
+
+    filter() {
+      this.page = 1;
+    },
+
+    pageStateOptions(value) {
       window.history.pushState(
         null,
         document.title,
-        `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
+        `${window.location.pathname}?filter=${value.filter}&page=${value.page}`
       );
     },
   },
@@ -373,7 +396,7 @@ export default {
     const searchParams = new URL(window.location).searchParams.entries();
     const searchParamsData = Object.fromEntries(searchParams);
 
-    const currentPage = searchParamsData.page;
+    const currentPage = parseInt(searchParamsData.page);
     const currentFilter = searchParamsData.filter;
 
     if (currentPage) this.page = currentPage;
