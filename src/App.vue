@@ -198,9 +198,7 @@ export default {
       ticker: null,
       tickers: [],
       activeTicker: null,
-      error: false,
       allTickers: [],
-      tips: [],
 
       filter: "",
       page: 1,
@@ -251,59 +249,48 @@ export default {
         page: this.page,
       };
     },
+
+    tips() {
+      if (!this.ticker) {
+        return [];
+      }
+
+      return this.allTickers.filter((t) => t.includes(this.ticker)).slice(0, 4);
+    },
+
+    error() {
+      if (!this.ticker) {
+        return false;
+      }
+
+      if (this.tickers.find((t) => t.name === this.ticker)) {
+        return "Такой тикер уже добавлен";
+      }
+
+      if (!this.allTickers.includes(this.ticker)) {
+        return "Тикер не найден в списке";
+      }
+
+      return false;
+    },
   },
 
   methods: {
     addTicker(ticker) {
-      if (!ticker) return;
+      const newTicker = ticker.toUpperCase();
+      if (!newTicker) return;
 
-      this.isTickerAlreadyAdd(ticker);
-      if (this.error) return;
+      if (this.error && this.ticker === newTicker) return;
 
-      this.isTickerValid(ticker);
-      if (this.error) return;
-
-      const newTicker = {
-        name: ticker.toUpperCase(),
+      const tickerToAdd = {
+        name: newTicker,
         price: "-",
       };
 
-      this.tickers = [...this.tickers, newTicker];
+      this.tickers = [...this.tickers, tickerToAdd];
 
-      this.clearTickerInput();
-      this.error = false;
-      this.tips = [];
-      this.filter = "";
-    },
-
-    clearTickerInput() {
       this.ticker = "";
-    },
-
-    isTickerAlreadyAdd(ticker) {
-      this.error = this.tickers.find((t) => t.name === ticker.toUpperCase())
-        ? "Такой тикер уже добавлен"
-        : false;
-    },
-
-    isTickerValid(ticker) {
-      this.error = this.allTickers.includes(ticker.toUpperCase())
-        ? false
-        : "Тикер не найден в списке";
-    },
-
-    tipsTicker(string) {
-      let count = 0;
-      this.tips = this.allTickers.filter((t) => {
-        if (!string) return;
-
-        if (count >= 4) return;
-
-        if (t.includes(string.toUpperCase())) {
-          count++;
-          return t;
-        }
-      });
+      this.filter = "";
     },
 
     removeTicker(tickerToRemove) {
@@ -312,11 +299,6 @@ export default {
       }
 
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
-    },
-
-    handleTickerInput() {
-      this.isTickerAlreadyAdd(this.ticker);
-      this.tipsTicker(this.ticker);
     },
 
     selectActiveTicker(t) {
@@ -363,6 +345,10 @@ export default {
   },
 
   watch: {
+    ticker() {
+      this.ticker = this.ticker.toUpperCase();
+    },
+
     activeTicker() {
       this.graph = [];
     },
