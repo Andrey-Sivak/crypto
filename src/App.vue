@@ -302,6 +302,7 @@ export default {
     },
 
     selectActiveTicker(t) {
+      if (t === this.activeTicker) return;
       this.activeTicker = t;
       this.graph = [];
     },
