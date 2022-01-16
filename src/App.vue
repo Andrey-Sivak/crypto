@@ -190,7 +190,7 @@
 </template>
 
 <script>
-import { loadTickers } from "./api";
+import { unsubscribeToUpdate, subscribeToUpdate } from "./api";
 
 export default {
   name: "App",
@@ -278,23 +278,8 @@ export default {
   },
 
   methods: {
-    async updateTickers() {
-      if (!this.tickers.length) return;
-
-      const tickersNameArr = this.tickers.map((t) => t.name);
-
-      const tickersPriceList = await loadTickers(tickersNameArr);
-
-      this.tickers.forEach((t) => {
-        const price = tickersPriceList[t.name];
-
-        if (!price) {
-          t.price = "-";
-          return;
-        }
-
-        t.price = price;
-      });
+    updateTicker(tickerName, tickerPrice) {
+      this.tickers.find((t) => t.name === tickerName).price = tickerPrice;
     },
 
     addTicker(ticker) {
@@ -310,6 +295,10 @@ export default {
 
       this.tickers = [...this.tickers, tickerToAdd];
 
+      subscribeToUpdate(newTicker, (newPrice) =>
+        this.updateTicker(newTicker, newPrice)
+      );
+
       this.ticker = "";
       this.filter = "";
     },
@@ -320,6 +309,7 @@ export default {
       }
 
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
+      unsubscribeToUpdate(tickerToRemove.name);
     },
 
     selectActiveTicker(t) {
@@ -350,11 +340,6 @@ export default {
 
     tickers() {
       window.localStorage.setItem("tickers-list", JSON.stringify(this.tickers));
-    },
-
-    activeTicker(v) {
-      // TODO: not working
-      this.graph.push(v.price);
     },
 
     paginatedTickers() {
@@ -390,6 +375,10 @@ export default {
 
     if (localeStorageTickersList) {
       this.tickers = JSON.parse(localeStorageTickersList);
+
+      this.tickers.forEach((t) => {
+        subscribeToUpdate(t.name, (newPrice) => this.updateTicker(t.name, newPrice));
+      });
     }
 
     await fetch(url)
@@ -402,7 +391,7 @@ export default {
       )
       .then(() => (this.loading = false));
 
-    setInterval(this.updateTickers, 3000);
+    // setInterval(this.updateTickers, 3000);
   },
 
   mounted() {},
