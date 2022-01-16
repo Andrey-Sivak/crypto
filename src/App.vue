@@ -118,7 +118,7 @@
                 {{ t.name }} - USD
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ t.price }}
+                {{ normalizePrice(t.price) }}
               </dd>
             </div>
             <div class="w-full border-t border-gray-200"></div>
@@ -190,6 +190,8 @@
 </template>
 
 <script>
+import { loadTickers } from "./api";
+
 export default {
   name: "App",
   data() {
@@ -276,6 +278,25 @@ export default {
   },
 
   methods: {
+    async updateTickers() {
+      if (!this.tickers.length) return;
+
+      const tickersNameArr = this.tickers.map((t) => t.name);
+
+      const tickersPriceList = await loadTickers(tickersNameArr);
+
+      this.tickers.forEach((t) => {
+        const price = tickersPriceList[t.name];
+
+        if (!price) {
+          t.price = "-";
+          return;
+        }
+
+        t.price = price;
+      });
+    },
+
     addTicker(ticker) {
       const newTicker = ticker.toUpperCase();
       if (!newTicker) return;
@@ -311,37 +332,14 @@ export default {
       this.activeTicker = null;
     },
 
-    setPrice(ticker) {
-      if (!ticker[1].USD) return;
+    normalizePrice(price) {
+      const priceInt = parseFloat(price);
 
-      const currentTicker = this.tickers.find((t) => t.name === ticker[0]);
+      if (!priceInt) {
+        return "-";
+      }
 
-      currentTicker.price =
-        ticker[1].USD > 1
-          ? ticker[1].USD.toFixed(2)
-          : ticker[1].USD.toPrecision(2);
-
-      if (!this.activeTicker) return;
-      if (ticker[0] === this.activeTicker.name)
-        this.graph.push(currentTicker.price);
-    },
-
-    async getPrice(tickers) {
-      if (!tickers.length) return;
-
-      const tickersString =
-        tickers.length !== 1
-          ? tickers.map((t) => t.name).join(",")
-          : tickers[0].name;
-
-      const url = `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${tickersString}&tsyms=USD`;
-
-      await fetch(url)
-        .then((res) => res.json())
-        .then((data) => Object.entries(data))
-        .then((tickersData) => {
-          tickersData.forEach((t) => this.setPrice(t));
-        });
+      return priceInt > 1 ? priceInt.toFixed(2) : priceInt.toPrecision(2);
     },
   },
 
@@ -350,12 +348,13 @@ export default {
       this.ticker = this.ticker.toUpperCase();
     },
 
-    activeTicker() {
-      this.graph = [];
-    },
-
     tickers() {
       window.localStorage.setItem("tickers-list", JSON.stringify(this.tickers));
+    },
+
+    activeTicker(v) {
+      // TODO: not working
+      this.graph.push(v.price);
     },
 
     paginatedTickers() {
@@ -383,11 +382,8 @@ export default {
     const searchParams = new URL(window.location).searchParams.entries();
     const searchParamsData = Object.fromEntries(searchParams);
 
-    const currentPage = parseInt(searchParamsData.page);
-    const currentFilter = searchParamsData.filter;
-
-    if (currentPage) this.page = currentPage;
-    if (currentFilter) this.filter = currentFilter;
+    this.page = parseInt(searchParamsData.page) || 1;
+    this.filter = searchParamsData.filter || "";
 
     const localeStorageTickersList =
       window.localStorage.getItem("tickers-list");
@@ -403,15 +399,12 @@ export default {
           (this.allTickers = Object.keys(data.Data).sort(
             (a, b) => a.length - b.length
           ))
-      );
+      )
+      .then(() => (this.loading = false));
 
-    setInterval(() => {
-      this.getPrice(this.tickers);
-    }, 3000);
+    setInterval(this.updateTickers, 3000);
   },
 
-  mounted() {
-    this.loading = false;
-  },
+  mounted() {},
 };
 </script>
